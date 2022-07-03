@@ -10,7 +10,7 @@ public class Server {
     private final static int THREADS = 64; // Задаем количество потоков в пуле потоков
     // Map для хранения пар: ключ - метод, значение - другая Map
     // Вложенная Map для хранения пар: ключ - путь, значение - Handler
-    private ConcurrentHashMap<String, ConcurrentHashMap> firstLevel = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, ConcurrentHashMap<String, Handler>> firstLevel = new ConcurrentHashMap<>();
     // Создаем пул потоков фиксированного размера
     private final ExecutorService es = Executors.newFixedThreadPool(THREADS);
 

@@ -5,13 +5,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.net.URISyntaxException;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Response implements Runnable {
     final Socket socket;
-    final ConcurrentHashMap<String, ConcurrentHashMap> firstLevel;
+    final ConcurrentHashMap<String, ConcurrentHashMap<String, Handler>> firstLevel;
 
-    Response(Socket socket, ConcurrentHashMap<String, ConcurrentHashMap> firstLevel) {
+    Response(Socket socket, ConcurrentHashMap<String, ConcurrentHashMap<String, Handler>> firstLevel) {
         this.socket = socket;
         this.firstLevel = firstLevel;
     }
@@ -24,15 +25,15 @@ public class Response implements Runnable {
         ) {
             final var request = createRequest(in);
             System.out.println("Зарегистрирован запрос: " + request.getMethod() + " "
-                    + request.getHeader() + " " + request.getProtocol());
+                    + request.getPathWithoutParams() + " " + request.getQueryParams() + " " + request.getProtocol());
 
             if (firstLevel.containsKey(request.getMethod())) {
                 System.out.println("Есть вложенная Map с ключом: " + request.getMethod());
-                if (firstLevel.get(request.getMethod()).containsKey(request.getHeader())) {
-                    System.out.println("Во вложенной Map есть handler по ключу: " + request.getHeader());
+                if (firstLevel.get(request.getMethod()).containsKey(request.getPathWithoutParams())) {
+                    System.out.println("Во вложенной Map есть handler по ключу: " + request.getPathWithoutParams());
                     var first = firstLevel.get(request.getMethod());
-                    var handler = (Handler) first.get(request.getHeader());
-                    handler.handle(out);
+                    var handler = (Handler) first.get(request.getPathWithoutParams());
+                    handler.handle(request, out);
                     System.out.println("Успешно направлен ответ на запрос!");
                 } else  {
                     returnError(out);
@@ -42,7 +43,7 @@ public class Response implements Runnable {
                 returnError(out);
                 System.out.println("На запрос направлен ответ об ошибке!");
             }
-        } catch (IOException e) {
+        } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
         }
     }
