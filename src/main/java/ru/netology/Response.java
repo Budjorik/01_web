@@ -24,15 +24,15 @@ public class Response implements Runnable {
         ) {
             final var request = createRequest(in);
             System.out.println("Зарегистрирован запрос: " + request.getMethod() + " "
-                    + request.getHeader() + " " + request.getProtocol());
+                    + request.getPath() + " " + request.getProtocol());
 
             if (firstLevel.containsKey(request.getMethod())) {
                 System.out.println("Есть вложенная Map с ключом: " + request.getMethod());
-                if (firstLevel.get(request.getMethod()).containsKey(request.getHeader())) {
-                    System.out.println("Во вложенной Map есть handler по ключу: " + request.getHeader());
+                if (firstLevel.get(request.getMethod()).containsKey(request.getPath())) {
+                    System.out.println("Во вложенной Map есть handler по ключу: " + request.getPath());
                     var first = firstLevel.get(request.getMethod());
-                    var handler = (Handler) first.get(request.getHeader());
-                    handler.handle(out);
+                    var handler = (Handler) first.get(request.getPath());
+                    handler.handle(request, out);
                     System.out.println("Успешно направлен ответ на запрос!");
                 } else  {
                     returnError(out);

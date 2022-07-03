@@ -2,14 +2,14 @@ package ru.netology;
 
 public class Request {
     private String method;
-    private String header;
+    private String path;
     private String protocol;
     private String body;
 
-    public Request(String method, String header, String protocol, String body) {
+    public Request(String method, String path, String protocol, String body) {
         this.method = method;
+        this.path = path;
         this.protocol = protocol;
-        this.header = header;
         this.body = body;
     }
 
@@ -17,8 +17,8 @@ public class Request {
         return method;
     }
 
-    public String getHeader() {
-        return header;
+    public String getPath() {
+        return path;
     }
 
     public String getProtocol() {

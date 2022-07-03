@@ -9,16 +9,15 @@ import java.time.LocalDateTime;
 public class Main {
     public static void main(String[] args) {
         final int PORT = 9999; // Задаем номер порта http-сервера для подключения клиентов
-        final String methodOne = "GET";
-        final String fullPathOne = "C:/Users/karau/IdeaProjects/01_web/public/spring.svg";
-        final String fullPathTwo = "C:/Users/karau/IdeaProjects/01_web/public/classic.html";
-        final String fullPathThree = "C:/Users/karau/IdeaProjects/01_web/public/index.html";
-        final String fullPathFour = "C:/Users/karau/IdeaProjects/01_web/public/spring.png";
+        final String fullPathOne = "./public/spring.svg";
+        final String fullPathTwo = "./public/classic.html";
+        final String fullPathThree = "./public/index.html";
+        final String fullPathFour = "./public/spring.png";
         Server myServer = new Server();
 
         // Добавление 1-го handler (обработчика)
-        myServer.addHandler(methodOne, fullPathOne, new Handler<BufferedOutputStream>() {
-            public void handle(BufferedOutputStream responseStream) throws IOException {
+        myServer.addHandler("GET", fullPathOne, new Handler<Request, BufferedOutputStream>() {
+            public void handle(Request request, BufferedOutputStream responseStream) throws IOException {
                 final var filePath = Path.of(fullPathOne);
                 final var mimeType = Files.probeContentType(filePath);
                 final var length = Files.size(filePath);
@@ -35,8 +34,8 @@ public class Main {
         });
 
         // Добавление 2-го handler (обработчика)
-        myServer.addHandler(methodOne, fullPathTwo, new Handler<BufferedOutputStream>() {
-            public void handle(BufferedOutputStream responseStream) throws IOException {
+        myServer.addHandler("GET", fullPathTwo, new Handler<Request, BufferedOutputStream>() {
+            public void handle(Request request, BufferedOutputStream responseStream) throws IOException {
                 final var filePath = Path.of(fullPathTwo);
                 final var mimeType = Files.probeContentType(filePath);
                 final var template = Files.readString(filePath);
@@ -57,8 +56,8 @@ public class Main {
         });
 
         // Добавление 3-го handler (обработчика)
-        myServer.addHandler(methodOne, fullPathThree, new Handler<BufferedOutputStream>() {
-            public void handle(BufferedOutputStream responseStream) throws IOException {
+        myServer.addHandler("GET", fullPathThree, new Handler<Request, BufferedOutputStream>() {
+            public void handle(Request request, BufferedOutputStream responseStream) throws IOException {
                 final var filePath = Path.of(fullPathThree);
                 final var mimeType = Files.probeContentType(filePath);
                 final var length = Files.size(filePath);
@@ -75,8 +74,8 @@ public class Main {
         });
 
         // Добавление 4-го handler (обработчика)
-        myServer.addHandler(methodOne, fullPathFour, new Handler<BufferedOutputStream>() {
-            public void handle(BufferedOutputStream responseStream) throws IOException {
+        myServer.addHandler("GET", fullPathFour, new Handler<Request, BufferedOutputStream>() {
+            public void handle(Request request, BufferedOutputStream responseStream) throws IOException {
                 final var filePath = Path.of(fullPathFour);
                 final var mimeType = Files.probeContentType(filePath);
                 final var length = Files.size(filePath);

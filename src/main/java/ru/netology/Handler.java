@@ -3,6 +3,6 @@ package ru.netology;
 import java.io.IOException;
 
 @FunctionalInterface
-public interface Handler<R> {
-    void handle(R r) throws IOException;
+public interface Handler<T, R> {
+    void handle(T t, R r) throws IOException;
 }
