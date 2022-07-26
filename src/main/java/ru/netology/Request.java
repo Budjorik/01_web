@@ -3,9 +3,10 @@ package ru.netology;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,12 +17,21 @@ public class Request {
     private final String path;
     private final String protocol;
     private final String body;
+    private final List<NameValuePair> params;
 
     public Request(String method, String path, String protocol, String body) {
         this.method = method;
         this.path = path;
         this.protocol = protocol;
         this.body = body;
+        List<NameValuePair> params1;
+        try {
+            params1 = URLEncodedUtils.parse(new URI(path), StandardCharsets.UTF_8);
+        } catch (URISyntaxException exception) {
+            params1 = null;
+            exception.printStackTrace();
+        }
+        this.params = params1;
     }
 
     public String getMethod() {
@@ -41,7 +51,6 @@ public class Request {
     }
 
     public Collection<String> getQueryParam(String name) {
-        List<NameValuePair> params = URLEncodedUtils.parse(path, Charset.forName("UTF-8"));
         List<String> selectedParam = new ArrayList<>();
         for (NameValuePair param : params) {
             if (name.equals(param.getName())) {
@@ -51,8 +60,7 @@ public class Request {
         return selectedParam;
     }
 
-    public Collection<NameValuePair> getQueryParams() throws URISyntaxException {
-        List<NameValuePair> params = URLEncodedUtils.parse(new URI(path), StandardCharsets.UTF_8);
+    public Collection<NameValuePair> getQueryParams() {
         return params;
     }
 
@@ -62,6 +70,16 @@ public class Request {
             return result;
         }
         return path;
+    }
+
+    public static Request createRequest(BufferedReader in) throws IOException {
+        var requestLine = in.readLine();
+        var parts = requestLine.split(" ");
+        if (parts.length >= 3) {
+            return new Request(parts[0], parts[1], parts[2], parts.length == 4 ? parts[3] : null);
+        } else {
+            return null;
+        }
     }
 
 }

@@ -17,7 +17,7 @@ public class Main {
         Server myServer = new Server();
 
         // Добавление 1-го handler (обработчика)
-        myServer.addHandler(GET, FULL_PATH_ONE, new Handler<Request, BufferedOutputStream>() {
+        myServer.addHandler(GET, FULL_PATH_ONE, new Handler() {
             public void handle(Request request, BufferedOutputStream responseStream) throws IOException {
                 final var filePath = Path.of(FULL_PATH_ONE);
                 final var mimeType = Files.probeContentType(filePath);
@@ -35,7 +35,7 @@ public class Main {
         });
 
         // Добавление 2-го handler (обработчика)
-        myServer.addHandler(GET, FULL_PATH_TWO, new Handler<Request, BufferedOutputStream>() {
+        myServer.addHandler(GET, FULL_PATH_TWO, new Handler() {
             public void handle(Request request, BufferedOutputStream responseStream) throws IOException {
                 final var filePath = Path.of(FULL_PATH_TWO);
                 final var mimeType = Files.probeContentType(filePath);
@@ -57,7 +57,7 @@ public class Main {
         });
 
         // Добавление 3-го handler (обработчика)
-        myServer.addHandler(GET, FULL_PATH_THREE, new Handler<Request, BufferedOutputStream>() {
+        myServer.addHandler(GET, FULL_PATH_THREE, new Handler() {
             public void handle(Request request, BufferedOutputStream responseStream) throws IOException {
                 final var filePath = Path.of(FULL_PATH_THREE);
                 final var mimeType = Files.probeContentType(filePath);
@@ -75,7 +75,7 @@ public class Main {
         });
 
         // Добавление 4-го handler (обработчика)
-        myServer.addHandler(GET, FULL_PATH_FOUR, new Handler<Request, BufferedOutputStream>() {
+        myServer.addHandler(GET, FULL_PATH_FOUR, new Handler() {
             public void handle(Request request, BufferedOutputStream responseStream) throws IOException {
                 final var filePath = Path.of(FULL_PATH_FOUR);
                 final var mimeType = Files.probeContentType(filePath);

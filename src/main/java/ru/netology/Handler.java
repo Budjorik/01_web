@@ -1,8 +1,9 @@
 package ru.netology;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 
 @FunctionalInterface
-public interface Handler<T, R> {
-    void handle(T t, R r) throws IOException;
+public interface Handler {
+    void handle(Request request, BufferedOutputStream responseStream) throws IOException;
 }

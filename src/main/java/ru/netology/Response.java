@@ -5,16 +5,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
-import java.net.URISyntaxException;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Response implements Runnable {
     final Socket socket;
-    final ConcurrentHashMap<String, ConcurrentHashMap<String, Handler>> firstLevel;
+    final ConcurrentHashMap<String, ConcurrentHashMap<String, Handler>> methods;
 
-    Response(Socket socket, ConcurrentHashMap<String, ConcurrentHashMap<String, Handler>> firstLevel) {
+    Response(Socket socket, ConcurrentHashMap<String, ConcurrentHashMap<String, Handler>> methods) {
         this.socket = socket;
-        this.firstLevel = firstLevel;
+        this.methods = methods;
     }
 
     @Override
@@ -23,15 +22,14 @@ public class Response implements Runnable {
                 final var in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 final var out = new BufferedOutputStream(socket.getOutputStream());
         ) {
-            final var request = createRequest(in);
+            final var request = Request.createRequest(in);
             System.out.println("Зарегистрирован запрос: " + request.getMethod() + " "
                     + request.getPathWithoutParams() + " " + request.getQueryParams() + " " + request.getProtocol());
-
-            if (firstLevel.containsKey(request.getMethod())) {
+            if (methods.containsKey(request.getMethod())) {
                 System.out.println("Есть вложенная Map с ключом: " + request.getMethod());
-                if (firstLevel.get(request.getMethod()).containsKey(request.getPathWithoutParams())) {
+                if (methods.get(request.getMethod()).containsKey(request.getPathWithoutParams())) {
                     System.out.println("Во вложенной Map есть handler по ключу: " + request.getPathWithoutParams());
-                    var first = firstLevel.get(request.getMethod());
+                    var first = methods.get(request.getMethod());
                     var handler = (Handler) first.get(request.getPathWithoutParams());
                     handler.handle(request, out);
                     System.out.println("Успешно направлен ответ на запрос!");
@@ -43,18 +41,8 @@ public class Response implements Runnable {
                 returnError(out);
                 System.out.println("На запрос направлен ответ об ошибке!");
             }
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    private Request createRequest(BufferedReader in) throws IOException {
-        var requestLine = in.readLine();
-        var parts = requestLine.split(" ");
-        if (parts.length >= 3) {
-            return new Request(parts[0], parts[1], parts[2], parts.length == 4 ? parts[3] : null);
-        } else {
-            return null;
         }
     }
 

@@ -10,7 +10,7 @@ public class Server {
     private final static int THREADS = 64; // Задаем количество потоков в пуле потоков
     // Map для хранения пар: ключ - метод, значение - другая Map
     // Вложенная Map для хранения пар: ключ - путь, значение - Handler
-    private ConcurrentHashMap<String, ConcurrentHashMap<String, Handler>> firstLevel = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, ConcurrentHashMap<String, Handler>> methods = new ConcurrentHashMap<>();
     // Создаем пул потоков фиксированного размера
     private final ExecutorService es = Executors.newFixedThreadPool(THREADS);
 
@@ -18,7 +18,7 @@ public class Server {
         try (final var serverSocket = new ServerSocket(port)) {
             while (true) {
                 final var socket = serverSocket.accept();
-                es.submit(new Response(socket, firstLevel));
+                es.submit(new Response(socket, methods));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -26,26 +26,26 @@ public class Server {
     }
 
     public void addHandler(String method, String fullPath, Handler handler) {
-        if (!firstLevel.containsKey(method)) {
+        if (!methods.containsKey(method)) {
             System.out.println("Успешно создана вложенная Map с ключом: " + method);
-            firstLevel.put(method, createSecondLevel(fullPath, handler));
+            methods.put(method, createMapOfPaths(fullPath, handler));
         } else {
-            addSecondLevel(firstLevel.get(method), fullPath, handler);
+            addPositionIntoMapOfPaths(methods.get(method), fullPath, handler);
         }
     }
 
-    private ConcurrentHashMap<String, Handler> createSecondLevel(String fullPath, Handler handler) {
+    private ConcurrentHashMap<String, Handler> createMapOfPaths(String fullPath, Handler handler) {
         // Map для хранения пар: ключ - путь, значение - Handler
-        ConcurrentHashMap<String, Handler> secondLevel = new ConcurrentHashMap<>();
-        secondLevel.put(returnLastPartOfPath(fullPath), handler);
+        ConcurrentHashMap<String, Handler> paths = new ConcurrentHashMap<>();
+        paths.put(returnLastPartOfPath(fullPath), handler);
         System.out.println("Во вложенную Map успешно добавлен handler по ключу: " + returnLastPartOfPath(fullPath));
-        return secondLevel;
+        return paths;
     }
 
-    private void addSecondLevel(ConcurrentHashMap<String, Handler> secondLevel, String fullPath, Handler handler) {
+    private void addPositionIntoMapOfPaths(ConcurrentHashMap<String, Handler> paths, String fullPath, Handler handler) {
         String lastPartOfPath = returnLastPartOfPath(fullPath);
-        if (!secondLevel.containsKey(lastPartOfPath)) {
-            secondLevel.put(lastPartOfPath, handler);
+        if (!paths.containsKey(lastPartOfPath)) {
+            paths.put(lastPartOfPath, handler);
             System.out.println("Во вложенную Map успешно добавлен handler по ключу: " + lastPartOfPath);
         } else {
             System.out.println("Ошибка - во вложенной Map уже существует handler по ключу: " + lastPartOfPath);
