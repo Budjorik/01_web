@@ -2,106 +2,60 @@ package ru.netology;
 
 import java.io.*;
 import java.net.ServerSocket;
-import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Server {
-    private final static List<String> validPaths = List.of("/index.html", "/spring.svg", "/spring.png", "/resources.html",
-            "/styles.css", "/app.js", "/links.html", "/forms.html", "/classic.html", "/events.html", "/events.js");
     private final static int THREADS = 64; // Задаем количество потоков в пуле потоков
-
-    private final int PORT; // Задаем номер порта http-сервера для подключения клиентов
+    // Map для хранения пар: ключ - метод, значение - другая Map
+    // Вложенная Map для хранения пар: ключ - путь, значение - Handler
+    private ConcurrentHashMap<String, ConcurrentHashMap<String, Handler>> methods = new ConcurrentHashMap<>();
     // Создаем пул потоков фиксированного размера
     private final ExecutorService es = Executors.newFixedThreadPool(THREADS);
 
-    public Server(int PORT) {
-        this.PORT = PORT;
-    }
-
-    public void toStart() {
-        try (final var serverSocket = new ServerSocket(PORT)) {
+    public void listen(int port) {
+        try (final var serverSocket = new ServerSocket(port)) {
             while (true) {
                 final var socket = serverSocket.accept();
-                es.submit(new Answer(socket, validPaths));
+                es.submit(new Response(socket, methods));
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-}
 
-class Answer implements Runnable {
-    final Socket socket;
-    final List<String> validPaths;
-
-    Answer(Socket socket, List<String> validPaths) {
-        this.socket = socket;
-        this.validPaths = validPaths;
+    public void addHandler(String method, String fullPath, Handler handler) {
+        if (!methods.containsKey(method)) {
+            System.out.println("Успешно создана вложенная Map с ключом: " + method);
+            methods.put(method, createMapOfPaths(fullPath, handler));
+        } else {
+            addPositionIntoMapOfPaths(methods.get(method), fullPath, handler);
+        }
     }
 
-    @Override
-    public void run() {
-        try (
-                final var in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                final var out = new BufferedOutputStream(socket.getOutputStream());
-        ) {
-            // read only request line for simplicity
-            // must be in form GET /path HTTP/1.1
-            final var requestLine = in.readLine();
-            final var parts = requestLine.split(" ");
+    private ConcurrentHashMap<String, Handler> createMapOfPaths(String fullPath, Handler handler) {
+        // Map для хранения пар: ключ - путь, значение - Handler
+        ConcurrentHashMap<String, Handler> paths = new ConcurrentHashMap<>();
+        paths.put(returnLastPartOfPath(fullPath), handler);
+        System.out.println("Во вложенную Map успешно добавлен handler по ключу: " + returnLastPartOfPath(fullPath));
+        return paths;
+    }
 
-            if (parts.length == 3) {
-                final var path = parts[1];
-                if (!validPaths.contains(path)) {
-                    out.write((
-                            "HTTP/1.1 404 Not Found\r\n" +
-                                    "Content-Length: 0\r\n" +
-                                    "Connection: close\r\n" +
-                                    "\r\n"
-                    ).getBytes());
-                    out.flush();
-                } else {
-                    final var filePath = Path.of(".", "public", path);
-                    final var mimeType = Files.probeContentType(filePath);
-
-                    // special case for classic
-                    if (path.equals("/classic.html")) {
-                        final var template = Files.readString(filePath);
-                        final var content = template.replace(
-                                "{time}",
-                                LocalDateTime.now().toString()
-                        ).getBytes();
-                        out.write((
-                                "HTTP/1.1 200 OK\r\n" +
-                                        "Content-Type: " + mimeType + "\r\n" +
-                                        "Content-Length: " + content.length + "\r\n" +
-                                        "Connection: close\r\n" +
-                                        "\r\n"
-                        ).getBytes());
-                        out.write(content);
-                        out.flush();
-                    } else {
-                        final var length = Files.size(filePath);
-                        out.write((
-                                "HTTP/1.1 200 OK\r\n" +
-                                        "Content-Type: " + mimeType + "\r\n" +
-                                        "Content-Length: " + length + "\r\n" +
-                                        "Connection: close\r\n" +
-                                        "\r\n"
-                        ).getBytes());
-                        Files.copy(filePath, out);
-                        out.flush();
-                    }
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void addPositionIntoMapOfPaths(ConcurrentHashMap<String, Handler> paths, String fullPath, Handler handler) {
+        String lastPartOfPath = returnLastPartOfPath(fullPath);
+        if (!paths.containsKey(lastPartOfPath)) {
+            paths.put(lastPartOfPath, handler);
+            System.out.println("Во вложенную Map успешно добавлен handler по ключу: " + lastPartOfPath);
+        } else {
+            System.out.println("Ошибка - во вложенной Map уже существует handler по ключу: " + lastPartOfPath);
         }
+    }
+
+    private String returnLastPartOfPath(String fullPath) {
+        var parts = fullPath.split("/");
+        String lastPartOfPath = "/" + parts[parts.length - 1];
+        return lastPartOfPath;
     }
 
 }
